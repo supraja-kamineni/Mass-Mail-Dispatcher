@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mail Dispatcher</title>
+    <!-- Fixed the meta tag -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.1/papaparse.min.js" defer></script>
+    <script src="https://smtpjs.com/v3/smtp.js" defer></script>
+</head>
+<body>
+    <input type="file" id="file-selector" accept=".csv" />
+    <!-- Fixed button ID -->
+    <button type="submit" id="send-mail">Send Mail</button>
+    <ul id="list"></ul>
+    <script>
+        const fileSelector = document.getElementById('file-selector');
+        const List = document.getElementById('list');
+        const Button = document.getElementById('send-mail');
+        const validEmails = [];
+
+        const extractEmail = (data) => {
+            data.forEach((e) => {
+                if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(e['Email Address'])) {
+                    validEmails.push(e['Email Address']);
+                } else {
+                    const newElement = document.createElement('li');
+                    newElement.innerHTML = e['Email Address'];
+                    List.appendChild(newElement);
+                }
+            });
+        };
+
+        const config = {
+            download: false,
+            header: true,
+            skipEmptyLines: true,
+            complete: (result) => {
+                extractEmail(result.data);
+            },
+        };
+
+        fileSelector.addEventListener('change', (event) => {
+            const fileList = event.target.files;
+            Papa.parse(fileList[0], config);
+        });
+
+        Button.addEventListener('click', () => {
+            // You need to provide SMTP configuration here directly
+            Email.send({
+                SecureToken: 'your-SecureToken-here', // You need to get this token from SMTPJS
+                Host: 'smtp.yourprovider.com', // SMTP server hostname
+                Username: 'your-email@example.com', // Your email address
+                Password: 'your-email-password', // Your email password or SMTP token
+                To: validEmails.join(','), // Join the array of emails with commas
+                From: 'your-email@example.com', // Your email address
+                Subject: 'This is the subject',
+                Body: 'And this is the body',
+            }).then((message) => alert(message));
+        });
+    </script>
+</body>
+</html>
